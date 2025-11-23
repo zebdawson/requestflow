@@ -81,8 +81,8 @@ class GoHighLevelClient {
 
     const opportunityData = {
       name: `${data.ticketNumber} - ${data.clientName}`,
-      pipelineId: 'job-request-management', // Update with actual pipeline ID
-      pipelineStageId: 'new-request', // Update with actual stage ID
+      pipelineId: 'oE36ZIt1Ow9UVkuGz2GN', // Job Request Management pipeline
+      pipelineStageId: '8d15443d-5962-42d6-a6e2-6b83b29f72a6', // 📥 New Request (Blue)
       status: 'open',
       locationId: this.config.locationId,
       monetaryValue: data.budgetAmount || 0,
