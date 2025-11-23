@@ -29,8 +29,7 @@
     }
   ],
   "env": {
-    "GHL_CLIENT_ID": "@ghl_client_id",
-    "GHL_CLIENT_SECRET": "@ghl_client_secret",
+    "GHL_ACCESS_TOKEN": "@ghl_access_token",
     "GHL_LOCATION_ID": "@ghl_location_id",
     "GHL_API_URL": "https://services.leadconnectorhq.com"
   }

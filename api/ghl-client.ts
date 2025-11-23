@@ -1,13 +1,13 @@
 /**
  * GoHighLevel API Client
  * Handles authentication and API communication with GoHighLevel
+ * Uses Access Token authentication (simpler than OAuth)
  */
 
 import axios, { AxiosInstance } from 'axios';
 
 interface GHLConfig {
-  clientId: string;
-  clientSecret: string;
+  accessToken: string;
   locationId: string;
   apiUrl: string;
 }
@@ -27,12 +27,10 @@ interface GHLOpportunity {
 class GoHighLevelClient {
   private config: GHLConfig;
   private axiosInstance: AxiosInstance;
-  private accessToken: string | null = null;
 
   constructor() {
     this.config = {
-      clientId: process.env.GHL_CLIENT_ID || '',
-      clientSecret: process.env.GHL_CLIENT_SECRET || '',
+      accessToken: process.env.GHL_ACCESS_TOKEN || '',
       locationId: process.env.GHL_LOCATION_ID || '',
       apiUrl: process.env.GHL_API_URL || 'https://services.leadconnectorhq.com',
     };
@@ -44,41 +42,24 @@ class GoHighLevelClient {
         'Content-Type': 'application/json',
       },
     });
-  }
 
-  /**
-   * Authenticate with GoHighLevel and get access token
-   * In production, implement proper OAuth2 flow
-   */
-  private async authenticate(): Promise<string> {
-    // For now, we'll use a simple token exchange
-    // In production, implement full OAuth2 flow with refresh tokens
-    try {
-      const response = await axios.post(
-        `${this.config.apiUrl}/oauth/token`,
-        {
-          client_id: this.config.clientId,
-          client_secret: this.config.clientSecret,
-          grant_type: 'client_credentials',
-        }
-      );
-
-      this.accessToken = response.data.access_token;
-      return this.accessToken;
-    } catch (error) {
-      console.error('[GHL] Authentication failed:', error);
-      throw new Error('Failed to authenticate with GoHighLevel');
+    // Validate required config
+    if (!this.config.accessToken) {
+      console.warn('[GHL] Warning: GHL_ACCESS_TOKEN not found in environment variables');
+    }
+    if (!this.config.locationId) {
+      console.warn('[GHL] Warning: GHL_LOCATION_ID not found in environment variables');
     }
   }
 
   /**
-   * Get access token (authenticate if needed)
+   * Get access token from environment
    */
-  private async getAccessToken(): Promise<string> {
-    if (!this.accessToken) {
-      await this.authenticate();
+  private getAccessToken(): string {
+    if (!this.config.accessToken) {
+      throw new Error('GHL_ACCESS_TOKEN not configured. Please add it to your .env.local file.');
     }
-    return this.accessToken!;
+    return this.config.accessToken;
   }
 
   /**
@@ -96,7 +77,7 @@ class GoHighLevelClient {
    * Create a new opportunity (ticket) in GoHighLevel
    */
   async createOpportunity(data: any): Promise<GHLOpportunity> {
-    const token = await this.getAccessToken();
+    const token = this.getAccessToken();
 
     const opportunityData = {
       name: `${data.ticketNumber} - ${data.clientName}`,
@@ -148,7 +129,7 @@ class GoHighLevelClient {
    * Get all opportunities from a location
    */
   async getOpportunities(filters?: any): Promise<GHLOpportunity[]> {
-    const token = await this.getAccessToken();
+    const token = this.getAccessToken();
 
     try {
       const params: any = {
@@ -177,7 +158,7 @@ class GoHighLevelClient {
    * Get a single opportunity by ID
    */
   async getOpportunity(id: string): Promise<GHLOpportunity> {
-    const token = await this.getAccessToken();
+    const token = this.getAccessToken();
 
     try {
       const response = await this.axiosInstance.get(`/opportunities/${id}`, {
@@ -197,7 +178,7 @@ class GoHighLevelClient {
    * Update an opportunity
    */
   async updateOpportunity(id: string, data: Partial<GHLOpportunity>): Promise<GHLOpportunity> {
-    const token = await this.getAccessToken();
+    const token = this.getAccessToken();
 
     try {
       const response = await this.axiosInstance.put(`/opportunities/${id}`, data, {
