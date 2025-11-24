@@ -1,0 +1,44 @@
+name: Generate CLIENT_FLOWCHART PDF
+
+on:
+  push:
+    branches:
+      - claude
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout claude
+        uses: actions/checkout@v4
+        with:
+          ref: claude
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install md-to-pdf
+        run: npm install -g md-to-pdf
+      - name: Generate PDF
+        run: |
+          if [ -f CLIENT_FLOWCHART.md ]; then
+            md-to-pdf CLIENT_FLOWCHART.md -o CLIENT_FLOWCHART.pdf --print-background || true
+          else
+            echo "CLIENT_FLOWCHART.md not found"
+            exit 1
+          fi
+      - name: Commit PDF
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git status --porcelain | grep "CLIENT_FLOWCHART.pdf"; then
+            git add CLIENT_FLOWCHART.pdf
+            git commit -m "chore: add generated CLIENT_FLOWCHART.pdf" || echo "no commit"
+            git push origin HEAD:claude
+          else
+            echo "No PDF changes to commit"
+          fi
